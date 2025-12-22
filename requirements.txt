@@ -7,3 +7,7 @@ pypdf
 python-dotenv
 langchain-huggingface
 langchain-chroma
+fastapi
+uvicorn
+langserve
+langchain-core
