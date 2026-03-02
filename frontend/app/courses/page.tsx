@@ -209,8 +209,9 @@ export default function CoursesPage() {
     useEffect(() => {
         const fetchCourses = async () => {
             try {
+                const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
                 const response = await axios.get(
-                    `http://localhost:8000/courses?t=${new Date().getTime()}`
+                    `${API_BASE}/courses?t=${new Date().getTime()}`
                 );
                 setCourses(response.data);
             } catch (err) {
