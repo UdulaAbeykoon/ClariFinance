@@ -48,7 +48,7 @@ app.add_middleware(
 
 # --- RAG Setup (Replicated from main.py) ---
 
-ENABLE_RAG = os.getenv("ENABLE_RAG", "false").lower() == "true"
+ENABLE_RAG = os.getenv("ENABLE_RAG", "false").strip().lower() == "true"
 
 print("Initializing embeddings...")
 if ENABLE_RAG:
