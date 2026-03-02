@@ -68,7 +68,7 @@ export default function CourseNode({ course, index, isLast, isActive = true, isL
             </Link>
 
             {/* Level label below */}
-            <div className="mt-3 font-medium text-indigo-100/80 text-[10px] tracking-widest uppercase mb-1">
+            <div className="mt-3 font-medium text-blue-100/80 text-[10px] tracking-widest uppercase mb-1">
                 Module {index + 1}
             </div>
         </div>

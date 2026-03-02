@@ -1,9 +1,9 @@
 import os
 import sys
 from dotenv import load_dotenv
-from langchain_community.chat_models import ChatOpenAI
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.vectorstores import Chroma
+from langchain_openai import ChatOpenAI
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_chroma import Chroma
 from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
@@ -49,7 +49,8 @@ def main():
         "You are a financial analyst assistant. "
         "Use the following pieces of retrieved context to answer the question. "
         "If the answer is not in the context, say that you do not know. "
-        "Do not try to make up an answer."
+        "Do not try to make up an answer. "
+        "Always provide your answer in a readable point form. Put each point on a new line. Do NOT use asterisks (*) or any bullet characters."
         "\n\n"
         "{context}"
     )

@@ -1,4 +1,44 @@
-export default function VideoPlayer() {
+interface VideoPlayerProps {
+    courseId?: string;
+}
+
+export default function VideoPlayer({ courseId }: VideoPlayerProps) {
+    const videoMap: Record<string, string> = {
+        "c1": "/videos/c1.mp4",
+        "c2": "/videos/c2.mp4",
+        "c3": "/videos/c3.mp4",
+        "c4": "/videos/c4.mp4",
+        "c5": "/videos/c5.mp4",
+        "c6": "/videos/c6.mp4",
+    };
+
+    const videoSrc = courseId ? videoMap[courseId] : undefined;
+
+    const posterMap: Record<string, string> = {
+        "c1": "/videos/c1_thumbnail.png",
+        "c2": "/videos/c2_thumbnail.png",
+        "c3": "/videos/c3_thumbnail.png",
+        "c4": "/videos/c4_thumbnail.png",
+        "c5": "/videos/c5_thumbnail.png",
+        "c6": "/videos/c6_thumbnail.png",
+    };
+    const posterSrc = courseId ? posterMap[courseId] : undefined;
+
+    if (videoSrc) {
+        return (
+            <div className="w-full aspect-video bg-slate-900 rounded-xl overflow-hidden shadow-lg border border-slate-700">
+                <video
+                    className="w-full h-full object-cover"
+                    controls
+                    poster={posterSrc}
+                    src={videoSrc}
+                >
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+        );
+    }
+
     return (
         <div className="w-full aspect-video bg-slate-800 rounded-xl flex items-center justify-center relative shadow-lg group">
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -9,7 +49,7 @@ export default function VideoPlayer() {
             </div>
             {/* Mock Progress Bar */}
             <div className="absolute bottom-0 left-0 right-0 h-1 bg-slate-700/50 rounded-b-xl overflow-hidden">
-                <div className="h-full w-1/3 bg-indigo-500" />
+                <div className="h-full w-1/3 bg-blue-500" />
             </div>
         </div>
     );

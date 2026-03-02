@@ -32,26 +32,10 @@ export default function Sidebar() {
             <div className="flex-1 mt-6 px-2 space-y-2">
                 <Link
                     href="#"
-                    className="flex items-center gap-3 p-3 rounded-lg bg-indigo-600/10 text-indigo-400 border border-indigo-500/20"
+                    className="flex items-center gap-3 p-3 rounded-lg bg-blue-600/10 text-blue-400 border border-blue-500/20"
                 >
                     <BookOpen className="w-5 h-5 shrink-0" />
                     {!isCollapsed && <span className="font-medium">Courses</span>}
-                </Link>
-
-                <Link
-                    href="#"
-                    className="flex items-center gap-3 p-3 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors"
-                >
-                    <Briefcase className="w-5 h-5 shrink-0" />
-                    {!isCollapsed && <span className="font-medium">Interview Prep</span>}
-                </Link>
-
-                <Link
-                    href="#"
-                    className="flex items-center gap-3 p-3 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors"
-                >
-                    <LayoutDashboard className="w-5 h-5 shrink-0" />
-                    {!isCollapsed && <span className="font-medium">Progress</span>}
                 </Link>
             </div>
 

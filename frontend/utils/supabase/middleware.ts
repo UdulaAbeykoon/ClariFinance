@@ -38,24 +38,49 @@ export async function updateSession(request: NextRequest) {
     // supabase.auth.getUser(). A simple mistake could make it very hard to debug
     // issues with users being randomly logged out.
 
-    const {
-        data: { user },
-    } = await supabase.auth.getUser()
+    try {
+        const {
+            data: { user },
+        } = await supabase.auth.getUser()
 
-    if (
-        !user &&
-        !request.nextUrl.pathname.startsWith('/login') &&
-        !request.nextUrl.pathname.startsWith('/auth') &&
-        request.nextUrl.pathname !== '/' // Allow home page
-    ) {
-        // no user, potentially redirect to login
-        // For now we allow home page. 
-        // If they try to access /courses or /chat without login, we redirect.
-        if (request.nextUrl.pathname.startsWith('/courses') || request.nextUrl.pathname.startsWith('/chat')) {
-            const url = request.nextUrl.clone()
-            url.pathname = '/login'
-            return NextResponse.redirect(url)
+        if (
+            !request.nextUrl.pathname.startsWith('/login') &&
+            !request.nextUrl.pathname.startsWith('/signup') &&
+            !request.nextUrl.pathname.startsWith('/auth') &&
+            !request.nextUrl.pathname.startsWith('/onboarding') &&
+            request.nextUrl.pathname !== '/' // Allow home page
+        ) {
+            const isProtectedArea = request.nextUrl.pathname.startsWith('/courses') || request.nextUrl.pathname.startsWith('/chat');
+            const isSubscribePage = request.nextUrl.pathname.startsWith('/subscribe');
+
+            if (!user) {
+                // No user, redirect from protected routes to login
+                if (isProtectedArea || isSubscribePage) {
+                    const url = request.nextUrl.clone();
+                    url.pathname = '/login';
+                    return NextResponse.redirect(url);
+                }
+            } else {
+                // User is authenticated
+                const hasSubscription = user.user_metadata?.has_subscription === true;
+
+                if (!hasSubscription && isProtectedArea) {
+                    // Try to access courses/chat without subscription -> go to subscribe
+                    const url = request.nextUrl.clone();
+                    url.pathname = '/subscribe';
+                    return NextResponse.redirect(url);
+                }
+
+                if (hasSubscription && isSubscribePage) {
+                    // They have a subscription and are trying to see subscribe page -> to courses
+                    const url = request.nextUrl.clone();
+                    url.pathname = '/courses';
+                    return NextResponse.redirect(url);
+                }
+            }
         }
+    } catch {
+        // Supabase unreachable – allow the request through without auth check
     }
 
     return supabaseResponse
