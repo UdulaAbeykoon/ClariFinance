@@ -16,15 +16,22 @@ export default function VideoPlayer({ courseId }: VideoPlayerProps) {
 
     if (youtubeId) {
         return (
-            <div className="w-full aspect-video bg-slate-900 rounded-xl overflow-hidden shadow-lg border border-slate-700">
-                <iframe
-                    className="w-full h-full object-cover"
-                    src={`https://www.youtube.com/embed/${youtubeId}?rel=0&modestbranding=1`}
-                    title="ClariFi Course Video"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    referrerPolicy="strict-origin-when-cross-origin"
-                    allowFullScreen
-                ></iframe>
+            <div className="w-full aspect-video bg-slate-900 rounded-xl overflow-hidden shadow-lg border border-slate-700 relative pointer-events-auto">
+                {/* 
+                  YouTube deprecated `showinfo=0`. The ONLY way to entirely hide the title/share 
+                  overlay is to physically enlarge and clip off the top 60px of the iframe via CSS.
+                */}
+                <div className="absolute top-[-60px] left-0 right-0 bottom-0 pointer-events-auto">
+                    <iframe
+                        className="w-full h-full object-cover"
+                        style={{ height: "calc(100% + 60px)" }}
+                        src={`https://www.youtube.com/embed/${youtubeId}?rel=0&modestbranding=1&controls=1`}
+                        title="ClariFi Course Video"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        referrerPolicy="strict-origin-when-cross-origin"
+                        allowFullScreen
+                    ></iframe>
+                </div>
             </div>
         );
     }
