@@ -62,8 +62,9 @@ export default function RightSidebar({ courseId, notes = [], onDeleteNote, onNot
             const userMessage: Message = { id: Date.now().toString(), role: "user", content: clarifyMessage };
             setMessages(prev => [...prev, userMessage]);
             setIsLoading(true);
+            const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
-            axios.post("http://127.0.0.1:8000/chat", {
+            axios.post(`${API_BASE}/chat`, {
                 query: clarifyMessage,
                 course_id: courseId
             }).then((response) => {
@@ -96,7 +97,8 @@ export default function RightSidebar({ courseId, notes = [], onDeleteNote, onNot
         setIsLoading(true);
 
         try {
-            const response = await axios.post("http://127.0.0.1:8000/chat", {
+            const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+            const response = await axios.post(`${API_BASE}/chat`, {
                 query: userMessage.content,
                 course_id: courseId
             });
