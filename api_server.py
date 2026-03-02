@@ -40,7 +40,7 @@ app = FastAPI(title="ClariFi API")
 # Enable CORS for Next.js frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=["*"], # Allow Vercel and Railway communication
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -147,4 +147,6 @@ async def chat(request: QueryRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # Dynamically bind to Railway's injected port variable
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
