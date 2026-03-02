@@ -145,6 +145,18 @@ async def chat(request: QueryRequest):
         print(f"Error processing request: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/debug_rag")
+async def debug_rag():
+    return {
+        "ENABLE_RAG_VAR": os.getenv("ENABLE_RAG"),
+        "ENABLE_RAG_BOOL": ENABLE_RAG,
+        "GROQ_API_KEY_EXISTS": bool(GROQ_API_KEY),
+        "DB_DIR_EXISTS": os.path.exists(DB_DIR),
+        "EMBEDDINGS_INITIALIZED": embeddings is not None,
+        "RAG_CHAIN_INITIALIZED": rag_chain is not None,
+        "chroma_dir_contents": os.listdir(DB_DIR) if os.path.exists(DB_DIR) else None
+    }
+
 if __name__ == "__main__":
     import uvicorn
     # Dynamically bind to Railway's injected port variable
