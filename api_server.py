@@ -115,7 +115,9 @@ def init_rag():
             question_answer_chain = create_stuff_documents_chain(llm, prompt)
             rag_chain = create_retrieval_chain(retriever, question_answer_chain)
     except Exception as exc:
-        print(f"Warning: RAG initialization failed ({exc}). RAG will be disabled.")
+        import traceback
+        error_msg = f"Type: {type(exc).__name__}, Message: {str(exc)}\nTraceback: {traceback.format_exc()}"
+        print(f"Warning: RAG initialization failed:\n{error_msg}")
         rag_chain = None
 
     rag_initialized = True
