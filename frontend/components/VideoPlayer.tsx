@@ -3,38 +3,28 @@ interface VideoPlayerProps {
 }
 
 export default function VideoPlayer({ courseId }: VideoPlayerProps) {
-    const videoMap: Record<string, string> = {
-        "c1": "/videos/c1.mp4",
-        "c2": "/videos/c2.mp4",
-        "c3": "/videos/c3.mp4",
-        "c4": "/videos/c4.mp4",
-        "c5": "/videos/c5.mp4",
-        "c6": "/videos/c6.mp4",
+    const youtubeMap: Record<string, string> = {
+        "c1": "6kpQPxkAjw8",
+        "c2": "mwfgxp62j7s",
+        "c3": "5zba1fZc3zA",
+        "c4": "wrqGGqbjCSk",
+        "c5": "NOcjBq86tNk",
+        "c6": "idMorcTjKQk",
     };
 
-    const videoSrc = courseId ? videoMap[courseId] : undefined;
+    const youtubeId = courseId ? youtubeMap[courseId] : undefined;
 
-    const posterMap: Record<string, string> = {
-        "c1": "/videos/c1_thumbnail.png",
-        "c2": "/videos/c2_thumbnail.png",
-        "c3": "/videos/c3_thumbnail.png",
-        "c4": "/videos/c4_thumbnail.png",
-        "c5": "/videos/c5_thumbnail.png",
-        "c6": "/videos/c6_thumbnail.png",
-    };
-    const posterSrc = courseId ? posterMap[courseId] : undefined;
-
-    if (videoSrc) {
+    if (youtubeId) {
         return (
             <div className="w-full aspect-video bg-slate-900 rounded-xl overflow-hidden shadow-lg border border-slate-700">
-                <video
+                <iframe
                     className="w-full h-full object-cover"
-                    controls
-                    poster={posterSrc}
-                    src={videoSrc}
-                >
-                    Your browser does not support the video tag.
-                </video>
+                    src={`https://www.youtube.com/embed/${youtubeId}?rel=0&modestbranding=1`}
+                    title="ClariFi Course Video"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allowFullScreen
+                ></iframe>
             </div>
         );
     }
