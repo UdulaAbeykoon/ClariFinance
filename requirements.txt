@@ -6,7 +6,7 @@ langchain-core==0.2.43
 langchain-chroma
 langchain-huggingface<0.1
 langchain-openai<0.2
-chromadb>=0.4.24
+chromadb==1.5.0
 pydantic
 fastapi
 uvicorn
