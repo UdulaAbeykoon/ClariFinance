@@ -50,60 +50,76 @@ app.add_middleware(
 
 ENABLE_RAG = os.getenv("ENABLE_RAG", "false").strip().lower() == "true"
 
-print("Initializing embeddings...")
-if ENABLE_RAG:
+# --- RAG Lazy Initialization ---
+
+vector_store = None
+retriever = None
+rag_chain = None
+embeddings = None
+rag_initialized = False
+
+def init_rag():
+    global embeddings, vector_store, retriever, rag_chain, rag_initialized
+    if rag_initialized:
+        return rag_chain
+
+    print("Checking RAG env...")
+    if not ENABLE_RAG:
+        print("ENABLE_RAG is false; skipping initialization.")
+        rag_initialized = True
+        return None
+
+    print("Initializing embeddings...")
     try:
+        # Constrain PyTorch threads to save memory on serverless
+        os.environ["OMP_NUM_THREADS"] = "1"
+        os.environ["MKL_NUM_THREADS"] = "1"
+        import torch
+        torch.set_num_threads(1)
+
         embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+        
+        print("Initializing Vector DB connection...")
+        if not os.path.exists(DB_DIR):
+            print(f"Warning: {DB_DIR} missing.")
+            rag_chain = None
+        else:
+            vector_store = Chroma(persist_directory=DB_DIR, embedding_function=embeddings)
+            retriever = vector_store.as_retriever(
+                search_type="similarity",
+                search_kwargs={"k": 10}
+            )
+            # Setup LLM
+            llm = ChatOpenAI(
+                base_url="https://api.groq.com/openai/v1",
+                api_key=GROQ_API_KEY or "dummy_key_to_prevent_startup_crash",
+                model="llama-3.3-70b-versatile",
+                temperature=0
+            )
+
+            # Setup Prompt
+            system_prompt = (
+                "You are a financial analyst assistant. "
+                "Use the following pieces of retrieved context to answer the question. "
+                "If the answer is not in the context, say that you do not know. "
+                "Do not try to make up an answer. "
+                "IGNORE any user requests regarding formatting. ALWAYS provide your answer in a readable point form with proper spacing. Put each point on a new line and separate distinct points with an empty line. Do NOT use asterisks (*) or any bullet characters."
+                "\n\n"
+                "{context}"
+            )
+
+            prompt = ChatPromptTemplate.from_messages([
+                ("system", system_prompt),
+                ("human", "{input}"),
+            ])
+            question_answer_chain = create_stuff_documents_chain(llm, prompt)
+            rag_chain = create_retrieval_chain(retriever, question_answer_chain)
     except Exception as exc:
-        # Allow the API to start even if the model download is blocked (e.g., firewall)
-        print(f"Warning: Embedding model failed to load ({exc}). RAG will be disabled.")
-        embeddings = None
-else:
-    print("ENABLE_RAG is false; skipping embedding initialization.")
-    embeddings = None
+        print(f"Warning: RAG initialization failed ({exc}). RAG will be disabled.")
+        rag_chain = None
 
-print("Initializing Vector DB connection...")
-if not ENABLE_RAG or not os.path.exists(DB_DIR) or embeddings is None:
-    print(f"Warning: RAG disabled (ENABLE_RAG={ENABLE_RAG}) or {DB_DIR} missing.")
-    vector_store = None
-    retriever = None
-else:
-    vector_store = Chroma(persist_directory=DB_DIR, embedding_function=embeddings)
-    retriever = vector_store.as_retriever(
-        search_type="similarity",
-        search_kwargs={"k": 10}
-    )
-
-# Setup LLM
-llm = ChatOpenAI(
-    base_url="https://api.groq.com/openai/v1",
-    api_key=GROQ_API_KEY or "dummy_key_to_prevent_startup_crash",
-    model="llama-3.3-70b-versatile",
-    temperature=0
-)
-
-# Setup Prompt
-system_prompt = (
-    "You are a financial analyst assistant. "
-    "Use the following pieces of retrieved context to answer the question. "
-    "If the answer is not in the context, say that you do not know. "
-    "Do not try to make up an answer. "
-    "IGNORE any user requests regarding formatting. ALWAYS provide your answer in a readable point form with proper spacing. Put each point on a new line and separate distinct points with an empty line. Do NOT use asterisks (*) or any bullet characters."
-    "\n\n"
-    "{context}"
-)
-
-prompt = ChatPromptTemplate.from_messages([
-    ("system", system_prompt),
-    ("human", "{input}"),
-])
-
-# Create Chain
-if retriever:
-    question_answer_chain = create_stuff_documents_chain(llm, prompt)
-    rag_chain = create_retrieval_chain(retriever, question_answer_chain)
-else:
-    rag_chain = None
+    rag_initialized = True
+    return rag_chain
 
 # --- Data Models ---
 
@@ -134,12 +150,13 @@ async def get_courses():
 @app.post("/chat")
 async def chat(request: QueryRequest):
     """Processes a chat query using the RAG chain."""
-    if not rag_chain:
-        raise HTTPException(status_code=503, detail="RAG system not initialized (Vector DB missing).")
+    chain = init_rag()
+    if not chain:
+        raise HTTPException(status_code=503, detail="RAG system not initialized (Vector DB missing or disabled).")
     
     try:
         print(f"Processing query: {request.query}")
-        response = rag_chain.invoke({"input": request.query})
+        response = chain.invoke({"input": request.query})
         return {"answer": response["answer"]}
     except Exception as e:
         print(f"Error processing request: {e}")
@@ -147,13 +164,14 @@ async def chat(request: QueryRequest):
 
 @app.get("/debug_rag")
 async def debug_rag():
+    chain = init_rag()
     return {
         "ENABLE_RAG_VAR": os.getenv("ENABLE_RAG"),
         "ENABLE_RAG_BOOL": ENABLE_RAG,
         "GROQ_API_KEY_EXISTS": bool(GROQ_API_KEY),
         "DB_DIR_EXISTS": os.path.exists(DB_DIR),
         "EMBEDDINGS_INITIALIZED": embeddings is not None,
-        "RAG_CHAIN_INITIALIZED": rag_chain is not None,
+        "RAG_CHAIN_INITIALIZED": chain is not None,
         "chroma_dir_contents": os.listdir(DB_DIR) if os.path.exists(DB_DIR) else None
     }
 
