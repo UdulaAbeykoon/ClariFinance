@@ -77,7 +77,7 @@ else:
 # Setup LLM
 llm = ChatOpenAI(
     base_url="https://api.groq.com/openai/v1",
-    api_key=GROQ_API_KEY,
+    api_key=GROQ_API_KEY or "dummy_key_to_prevent_startup_crash",
     model="llama-3.3-70b-versatile",
     temperature=0
 )
