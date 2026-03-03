@@ -1,6 +1,7 @@
 --extra-index-url https://download.pytorch.org/whl/cpu
 torch
 langchain>=0.3.0
+langchain-classic>=0.1.0
 langchain-community>=0.3.0
 langchain-core>=0.3.76
 langchain-chroma==0.2.6
