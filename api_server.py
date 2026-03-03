@@ -51,9 +51,10 @@ retriever = None
 rag_chain = None
 embeddings = None
 rag_initialized = False
+rag_error_details = None
 
 def init_rag():
-    global embeddings, vector_store, retriever, rag_chain, rag_initialized
+    global embeddings, vector_store, retriever, rag_chain, rag_initialized, rag_error_details
     if rag_initialized:
         return rag_chain
 
@@ -118,6 +119,7 @@ def init_rag():
     except Exception as exc:
         import traceback
         error_msg = f"Type: {type(exc).__name__}, Message: {str(exc)}\nTraceback: {traceback.format_exc()}"
+        rag_error_details = error_msg
         print(f"Warning: RAG initialization failed:\n{error_msg}")
         rag_chain = None
 
@@ -168,6 +170,7 @@ async def chat(request: QueryRequest):
 @app.get("/debug_rag")
 async def debug_rag():
     chain = init_rag()
+    global rag_error_details
     return {
         "ENABLE_RAG_VAR": os.getenv("ENABLE_RAG"),
         "ENABLE_RAG_BOOL": ENABLE_RAG,
@@ -175,7 +178,8 @@ async def debug_rag():
         "DB_DIR_EXISTS": os.path.exists(DB_DIR),
         "EMBEDDINGS_INITIALIZED": embeddings is not None,
         "RAG_CHAIN_INITIALIZED": chain is not None,
-        "chroma_dir_contents": os.listdir(DB_DIR) if os.path.exists(DB_DIR) else None
+        "chroma_dir_contents": os.listdir(DB_DIR) if os.path.exists(DB_DIR) else None,
+        "RAG_ERROR": rag_error_details
     }
 
 if __name__ == "__main__":
