@@ -171,6 +171,8 @@ async def chat(request: QueryRequest):
 async def debug_rag():
     chain = init_rag()
     global rag_error_details
+    import subprocess
+    pip_freeze = subprocess.check_output("pip freeze", shell=True, text=True, stderr=subprocess.STDOUT)
     return {
         "ENABLE_RAG_VAR": os.getenv("ENABLE_RAG"),
         "ENABLE_RAG_BOOL": ENABLE_RAG,
@@ -179,7 +181,8 @@ async def debug_rag():
         "EMBEDDINGS_INITIALIZED": embeddings is not None,
         "RAG_CHAIN_INITIALIZED": chain is not None,
         "chroma_dir_contents": os.listdir(DB_DIR) if os.path.exists(DB_DIR) else None,
-        "RAG_ERROR": rag_error_details
+        "RAG_ERROR": rag_error_details,
+        "PIP_FREEZE": pip_freeze
     }
 
 if __name__ == "__main__":
