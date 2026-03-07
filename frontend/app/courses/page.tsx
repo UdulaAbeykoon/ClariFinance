@@ -5,7 +5,7 @@ import Link from "next/link";
 import axios from "axios";
 import { createClient } from "@/utils/supabase/client";
 import UserDropdown from "@/components/UserDropdown";
-import { getCourseProgress } from "@/lib/courseProgress";
+import { getCourseProgress, loadProgressFromSupabase } from "@/lib/courseProgress";
 import {
     BarChart2,
     BookOpen,
@@ -182,6 +182,7 @@ export default function CoursesPage() {
     const [error, setError] = useState("");
     const [selectedId, setSelectedId] = useState<string>("c1");
     const [username, setUsername] = useState<string | null>(null);
+    const [progressMap, setProgressMap] = useState<Record<string, number>>({});
 
     // On mount, restore last-viewed course from localStorage
     useEffect(() => {
@@ -191,7 +192,7 @@ export default function CoursesPage() {
         } catch { }
     }, []);
 
-    // Fetch current user
+    // Fetch current user and load progress from Supabase
     useEffect(() => {
         const fetchUser = async () => {
             try {
@@ -204,6 +205,11 @@ export default function CoursesPage() {
             } catch { }
         };
         fetchUser();
+
+        // Load progress from Supabase (merges with localStorage)
+        loadProgressFromSupabase().then((map) => {
+            setProgressMap(map);
+        });
     }, []);
 
     useEffect(() => {
@@ -243,8 +249,10 @@ export default function CoursesPage() {
         ? COURSE_META[expandedCourse.id] || DEFAULT_META
         : null;
 
-    // Read live progress from localStorage (not from the stale COURSE_META)
-    const liveProgress = expandedCourse ? getCourseProgress(expandedCourse.id) : 0;
+    // Read live progress: prefer Supabase-loaded map, fall back to localStorage
+    const liveProgress = expandedCourse
+        ? (progressMap[expandedCourse.id] ?? getCourseProgress(expandedCourse.id))
+        : 0;
 
     return (
         <>
@@ -907,6 +915,39 @@ export default function CoursesPage() {
                                             </Link>
                                         </div>
                                     </div>
+                                    <a
+                                        href="https://form.typeform.com/to/VGmiQJjt"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            gap: 6,
+                                            width: "100%",
+                                            padding: "8px 16px",
+                                            marginTop: 12,
+                                            borderRadius: 12,
+                                            background: "#f1f5f9",
+                                            border: "1px solid #e2e8f0",
+                                            color: "#64748b",
+                                            fontSize: 13,
+                                            fontWeight: 600,
+                                            textDecoration: "none",
+                                            cursor: "pointer",
+                                            transition: "all 0.2s ease",
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.background = "#e2e8f0";
+                                            e.currentTarget.style.color = "#334155";
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.background = "#f1f5f9";
+                                            e.currentTarget.style.color = "#64748b";
+                                        }}
+                                    >
+                                        Having Issues?
+                                    </a>
                                 </div>
                             )}
                         </div>

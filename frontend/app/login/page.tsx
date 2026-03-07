@@ -41,11 +41,7 @@ export default function LoginPage() {
             setError(error.message);
             setLoading(false);
         } else {
-            if (data?.user?.user_metadata?.has_subscription) {
-                router.push('/courses');
-            } else {
-                router.push('/subscribe');
-            }
+            router.push('/courses');
             router.refresh();
         }
     };

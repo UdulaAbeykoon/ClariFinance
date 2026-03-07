@@ -62,17 +62,8 @@ export async function updateSession(request: NextRequest) {
                 }
             } else {
                 // User is authenticated
-                const hasSubscription = user.user_metadata?.has_subscription === true;
-
-                if (!hasSubscription && isProtectedArea) {
-                    // Try to access courses/chat without subscription -> go to subscribe
-                    const url = request.nextUrl.clone();
-                    url.pathname = '/subscribe';
-                    return NextResponse.redirect(url);
-                }
-
-                if (hasSubscription && isSubscribePage) {
-                    // They have a subscription and are trying to see subscribe page -> to courses
+                if (isSubscribePage) {
+                    // Redirect from subscribe page to courses
                     const url = request.nextUrl.clone();
                     url.pathname = '/courses';
                     return NextResponse.redirect(url);

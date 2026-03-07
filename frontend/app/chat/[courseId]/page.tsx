@@ -7,9 +7,14 @@ import RightSidebar from "@/components/RightSidebar";
 import VideoPlayer from "@/components/VideoPlayer";
 import PdfViewer from "@/components/PdfViewer";
 import type { PdfNote } from "@/components/PdfViewer";
-import { getCourseProgress } from "@/lib/courseProgress";
-
-const NOTES_STORAGE_KEY = (courseId: string) => `clarifi-notes-${courseId}`;
+import { getCourseProgress, loadProgressFromSupabase } from "@/lib/courseProgress";
+import {
+    getLocalNotes,
+    setLocalNotes,
+    loadNotesFromSupabase,
+    saveNoteToSupabase,
+    deleteNoteFromSupabase,
+} from "@/lib/notesPersistence";
 
 export default function ChatPage() {
     const params = useParams();
@@ -31,57 +36,55 @@ export default function ChatPage() {
     const [progress, setProgress] = useState(0);
     const [notified, setNotified] = useState(false);
     const [notes, setNotes] = useState<PdfNote[]>(() => {
-        // Lazy initializer won't work for route changes, so we also handle in useEffect
         if (typeof window === "undefined") return [];
-        try {
-            const saved = localStorage.getItem(NOTES_STORAGE_KEY(courseId));
-            return saved ? JSON.parse(saved) : [];
-        } catch {
-            return [];
-        }
+        return getLocalNotes(courseId);
     });
 
-    // Reload notes when courseId changes (navigating between courses)
+    // On mount / courseId change: load progress & notes from Supabase
     useEffect(() => {
-        try {
-            const saved = localStorage.getItem(NOTES_STORAGE_KEY(courseId));
-            setNotes(saved ? JSON.parse(saved) : []);
-        } catch {
-            setNotes([]);
-        }
-    }, [courseId]);
-
-    // Helper to save notes to localStorage
-    const saveNotes = (updatedNotes: PdfNote[]) => {
-        try {
-            localStorage.setItem(NOTES_STORAGE_KEY(courseId), JSON.stringify(updatedNotes));
-        } catch { }
-    };
-
-    // Re-read saved progress whenever courseId changes
-    useEffect(() => {
+        // Load progress
         setProgress(getCourseProgress(courseId));
+        loadProgressFromSupabase().then((progressMap) => {
+            if (progressMap[courseId] !== undefined) {
+                setProgress(progressMap[courseId]);
+            }
+        });
+
+        // Load notes
+        loadNotesFromSupabase(courseId).then((loaded) => {
+            setNotes(loaded);
+        });
     }, [courseId]);
 
     const handleProgressChange = useCallback((p: number) => {
         setProgress(p);
     }, []);
 
-    const handleAddNote = useCallback((note: PdfNote) => {
-        setNotes((prev) => {
-            const updated = [note, ...prev];
-            saveNotes(updated);
-            return updated;
-        });
-    }, [courseId]);
+    const handleAddNote = useCallback(
+        (note: PdfNote) => {
+            setNotes((prev) => {
+                const updated = [note, ...prev];
+                setLocalNotes(courseId, updated);
+                return updated;
+            });
+            // Persist to Supabase
+            saveNoteToSupabase(courseId, note);
+        },
+        [courseId]
+    );
 
-    const handleDeleteNote = useCallback((noteId: string) => {
-        setNotes((prev) => {
-            const updated = prev.filter((n) => n.id !== noteId);
-            saveNotes(updated);
-            return updated;
-        });
-    }, [courseId]);
+    const handleDeleteNote = useCallback(
+        (noteId: string) => {
+            setNotes((prev) => {
+                const updated = prev.filter((n) => n.id !== noteId);
+                setLocalNotes(courseId, updated);
+                return updated;
+            });
+            // Delete from Supabase
+            deleteNoteFromSupabase(noteId);
+        },
+        [courseId]
+    );
 
     const handleNoteClick = useCallback((note: PdfNote) => {
         // Scroll to the page in the PDF
@@ -125,7 +128,7 @@ export default function ChatPage() {
                         </h1>
                         <p className="text-xl text-slate-600 mb-8 leading-relaxed">
                             The <span className="font-semibold text-slate-800">Merger Models</span> module is currently under construction.
-                            We're crafting an immersive experience to help you master M&A deal structuring.
+                            We&apos;re crafting an immersive experience to help you master M&A deal structuring.
                         </p>
                         <button
                             onClick={() => {
@@ -200,4 +203,3 @@ export default function ChatPage() {
         </div>
     );
 }
-
